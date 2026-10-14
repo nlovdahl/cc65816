@@ -39,9 +39,20 @@
 #include "segments.h"
 #include "codegen816.h"
 
-#define M_BYTE(Value)   ((Value) & 0xFF)
-#define M_WORD(Value)   ((Value) & 0xFFFF)
-#define M_DWORD(Value)  ((Value) & 0xFFFFFFFF)
+#define M_BYTE(Value)   ((unsigned int) ((Value) & 0xFF))
+#define M_WORD(Value)   ((unsigned int) ((Value) & 0xFFFF))
+#define M_DWORD(Value)  ((unsigned int) ((Value) & 0xFFFFFFFF))
+
+static void TypeError (unsigned Type)
+/* Print an error message about an invalid operand type */
+{
+    /* Special handling for floats here: */
+    if ((Type & CF_TYPEMASK) == CF_FLOAT) {
+        Fatal ("Floating point type is currently unsupported");
+    } else {
+        Internal ("Invalid type in CF flags: %04X, type = %u", Type, Type & CF_TYPEMASK);
+    }
+}
 
 static int CheckStackRelative(int Offset)
 /* Check if an offset from the stack allows for stack-relative addressing. */
@@ -61,7 +72,7 @@ void g_816_leave(unsigned ToDrop)
     AddCodeLine("tax"); /* Save the return value. */
     AddCodeLine("tsc");
     AddCodeLine("clc");
-    AddCodeLine("adc #$%04", M_WORD(ToDrop));
+    AddCodeLine("adc #$%04X", M_WORD(ToDrop));
     AddCodeLine("tcs");
     AddCodeLine("txa");
 }
@@ -247,10 +258,10 @@ void g_816_getimmed(unsigned Flags, uintptr_t Val, const char* LabelBuf)
             break;
 
         case CF_LONG:
-            AddCodeLine("lda #$04X", M_WORD(Val >> 16));
+            AddCodeLine("lda #$%04X", M_WORD(Val >> 16));
             AddCodeLine("sta sreg");
             if (M_WORD(Val >> 16) != M_WORD(Val)) {
-                AddCodeLine("lda #$04X", M_WORD(Val));
+                AddCodeLine("lda #$%04X", M_WORD(Val));
             }
             break;
 
@@ -676,8 +687,6 @@ void g_816_addstatic(unsigned Flags, const char* LabelBuf)
 void g_816_addlocal(unsigned Flags, int Offs)
 /* Adds code to add a value from memory to the primary register. */
 {
-    unsigned EndCharAdd;
-
     switch (Flags & CF_TYPEMASK) {
         case CF_CHAR:
             AddCodeLine("sep #$20");
@@ -1159,10 +1168,10 @@ void g_816_subeqlocal(unsigned Flags, int StackOffs, unsigned long Val)
                 AddCodeLine("sep #$20");
                 /* Do the actual math now... */
                 if (Flags & CF_CONST) {
-                    AddCodeLine("lda $%02,s", M_BYTE(StackOffs + 1));
+                    AddCodeLine("lda $%02X,s", M_BYTE(StackOffs + 1));
                     AddCodeLine("sec");
                     AddCodeLine("sbc #$%02X", M_BYTE(Val));
-                    AddCodeLine("sta $%02,s", M_BYTE(StackOffs + 1));
+                    AddCodeLine("sta $%02X,s", M_BYTE(StackOffs + 1));
                 } else {
                     AddCodeLine("eor #$FF");
                     AddCodeLine("sec");
@@ -1424,6 +1433,7 @@ void g_816_cmp(unsigned Flags, unsigned long Val)
                 AddCodeLine("rep #$20");
                 break;
             }
+            /* fallthrough */
 
         case CF_INT:
             AddCodeLine("cmp #$%04X", M_WORD(Val));
