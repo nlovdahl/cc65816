@@ -90,6 +90,7 @@
     <ClInclude Include="cc65\casenode.h" />
     <ClInclude Include="cc65\codeent.h" />
     <ClInclude Include="cc65\codegen.h" />
+    <ClInclude Include="cc65\codegen816.h" />
     <ClInclude Include="cc65\codegentypes.h" />
     <ClInclude Include="cc65\codeinfo.h" />
     <ClInclude Include="cc65\codelab.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="cc65\casenode.c" />
     <ClCompile Include="cc65\codeent.c" />
     <ClCompile Include="cc65\codegen.c" />
+    <ClCompile Include="cc65\codegen816.c" />
     <ClCompile Include="cc65\codeinfo.c" />
     <ClCompile Include="cc65\codelab.c" />
     <ClCompile Include="cc65\codeopt.c" />
